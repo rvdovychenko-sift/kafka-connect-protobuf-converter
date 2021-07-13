@@ -100,6 +100,18 @@ public class ProtobufDataTest {
     return message.build();
   }
 
+  private KafkaMessage createKafkaMessage() throws ParseException {
+    NestedTestProto payloadMessage = createNestedTestProtoStringUserId();
+
+    KafkaMessage wrapperMessage = KafkaMessage.newBuilder()
+      .setEnqueueTime(1000L)
+      .setUuid("uuid")
+      .setMessage(payloadMessage.toByteString())
+      .build();
+
+    return wrapperMessage;
+  }
+
   private TestMessage createLegacyTestProto() throws ParseException {
     return TestMessage.newBuilder()
       .setTestString("hello")
@@ -382,6 +394,21 @@ public class ProtobufDataTest {
     NestedTestProto message = createNestedTestProtoStringUserId();
     ProtobufData protobufData = new ProtobufData(NestedTestProto.class, LEGACY_NAME);
     SchemaAndValue result = protobufData.toConnectData(message.toByteArray());
+    Schema expectedSchema = getExpectedNestedTestProtoSchemaStringUserId();
+    assertSchemasEqual(expectedSchema, result.schema());
+    assertEquals(new SchemaAndValue(getExpectedNestedTestProtoSchemaStringUserId(), getExpectedNestedProtoResultStringUserId(false)), result);
+  }
+
+  @Test
+  public void testSiftWrappedMessage() throws ParseException {
+    // Create wrapper message (KafkaMessage), actual payload is NestedTestProto message
+    KafkaMessage wrapperMessage = createKafkaMessage();
+
+    // Decode byte string as payload
+    ProtobufData protobufData = new ProtobufData(KafkaMessage.class, LEGACY_NAME, false, true);
+    SchemaAndValue result = protobufData.toConnectData(wrapperMessage.toByteArray());
+
+    // Expected payload message schema
     Schema expectedSchema = getExpectedNestedTestProtoSchemaStringUserId();
     assertSchemasEqual(expectedSchema, result.schema());
     assertEquals(new SchemaAndValue(getExpectedNestedTestProtoSchemaStringUserId(), getExpectedNestedProtoResultStringUserId(false)), result);
