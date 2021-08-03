@@ -43,7 +43,8 @@ public class ProtobufConverter implements Converter {
     String protoClassNameString = protoClassName.toString();
     try {
       log.info("Initializing ProtobufData with args: [protoClassName={}, legacyName={}, useConnectSchemaMap={}]", protoClassNameString, legacyNameString, useConnectSchemaMap);
-      protobufData = new ProtobufData(Class.forName(protoClassNameString).asSubclass(com.google.protobuf.GeneratedMessageV3.class), legacyNameString, useConnectSchemaMap);
+      boolean deserializeByteString = protoClassNameString.equals("com.sift.classifier.proto.KafkaMessage");
+      protobufData = new ProtobufData(Class.forName(protoClassNameString).asSubclass(com.google.protobuf.GeneratedMessageV3.class), legacyNameString, useConnectSchemaMap, deserializeByteString);
     } catch (ClassNotFoundException e) {
       throw new ConnectException("Proto class " + protoClassNameString + " not found in the classpath");
     } catch (ClassCastException e) {

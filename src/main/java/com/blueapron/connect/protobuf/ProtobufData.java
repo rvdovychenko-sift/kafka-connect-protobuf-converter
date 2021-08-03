@@ -67,7 +67,7 @@ class ProtobufData {
   private GeneratedMessageV3.Builder getPayloadBuilder() {
     try {
       // This class string should be configured through configurations on Kafka Connect eventually
-      String payloadClassString = "com.blueapron.connect.protobuf.NestedTestProtoOuterClass$NestedTestProto";
+      String payloadClassString = "com.sift.server.proto.ApiLogMessage";
 
       final Method newPayloadBuilder = Class.forName(payloadClassString)
         .asSubclass(com.google.protobuf.GeneratedMessageV3.class)
