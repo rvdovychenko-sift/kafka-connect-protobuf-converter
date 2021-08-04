@@ -52,7 +52,7 @@ class ProtobufData {
   private final boolean useConnectSchemaMap;
   // For this PoC, when this is set to true, we assume the byte string field is the actual payload
   // We need a more flexible way of handling this down the line
-  private final boolean deserializeByteString;
+  private final String protoPayloadClassNameString;
   public static final Descriptors.FieldDescriptor.Type[] PROTO_TYPES_WITH_DEFAULTS = new Descriptors.FieldDescriptor.Type[] { INT32, INT64, SINT32, SINT64, FLOAT, DOUBLE, BOOL, STRING, BYTES, ENUM };
   private HashMap<String, String> connectProtoNameMap = new HashMap<String, String>();
 
@@ -66,10 +66,7 @@ class ProtobufData {
 
   private GeneratedMessageV3.Builder getPayloadBuilder() {
     try {
-      // This class string should be configured through configurations on Kafka Connect eventually
-      String payloadClassString = "com.sift.server.proto.ApiLogMessage";
-
-      final Method newPayloadBuilder = Class.forName(payloadClassString)
+      final Method newPayloadBuilder = Class.forName(this.protoPayloadClassNameString)
         .asSubclass(com.google.protobuf.GeneratedMessageV3.class)
         .getDeclaredMethod("newBuilder");
       return (GeneratedMessageV3.Builder) newPayloadBuilder.invoke(Object.class);
@@ -115,17 +112,17 @@ class ProtobufData {
   }
 
   ProtobufData(Class<? extends com.google.protobuf.GeneratedMessageV3> clazz, String legacyName) {
-    this(clazz, legacyName, false, false);
+    this(clazz, legacyName, false, "");
   }
 
   ProtobufData(Class<? extends com.google.protobuf.GeneratedMessageV3> clazz, String legacyName, boolean useConnectSchemaMap) {
-    this(clazz, legacyName, useConnectSchemaMap, false);
+    this(clazz, legacyName, useConnectSchemaMap, "");
   }
 
-  ProtobufData(Class<? extends com.google.protobuf.GeneratedMessageV3> clazz, String legacyName, boolean useConnectSchemaMap, boolean deserializeByteString) {
+  ProtobufData(Class<? extends com.google.protobuf.GeneratedMessageV3> clazz, String legacyName, boolean useConnectSchemaMap, String protoPayloadClassNameString) {
     this.legacyName = legacyName;
     this.useConnectSchemaMap = useConnectSchemaMap;
-    this.deserializeByteString = deserializeByteString;
+    this.protoPayloadClassNameString = protoPayloadClassNameString;
 
     try {
       this.newBuilder = clazz.getDeclaredMethod("newBuilder");
@@ -141,7 +138,7 @@ class ProtobufData {
     if (message == null) {
       return SchemaAndValue.NULL;
     }
-    if (this.deserializeByteString) {
+    if (!this.protoPayloadClassNameString.isEmpty()) {
       // Build schema for payload message
       final Schema payloadSchema = toConnectSchema(getPayloadBuilder().getDefaultInstanceForType());
 
