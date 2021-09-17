@@ -17,6 +17,7 @@ public class ProtobufConverter implements Converter {
   private static final Logger log = LoggerFactory.getLogger(ProtobufConverter.class);
   private static final String PROTO_CLASS_NAME_CONFIG = "protoClassName";
   private static final String PROTO_PAYLOAD_CLASS_NAME_CONFIG = "protoPayloadClassName";
+  private static final String PROTO_PAYLOAD_FIELD_NAME_CONFIG = "protoPayloadFieldName";
   private static final String LEGACY_NAME_CONFIG = "legacyName";
   private static final String PROTO_MAP_CONVERSION_TYPE = "protoMapConversionType";
   private ProtobufData protobufData;
@@ -33,6 +34,7 @@ public class ProtobufConverter implements Converter {
 
     Object protoClassName = configs.get(PROTO_CLASS_NAME_CONFIG);
     Object protoPayloadClassName = configs.get(PROTO_PAYLOAD_CLASS_NAME_CONFIG);
+    Object protoPayloadFieldName = configs.get(PROTO_PAYLOAD_FIELD_NAME_CONFIG);
     if (isInvalidConfiguration(protoClassName, isKey)) {
       throw new ConnectException("Value converter must have a " + PROTO_CLASS_NAME_CONFIG + " configured");
     }
@@ -44,10 +46,13 @@ public class ProtobufConverter implements Converter {
 
     String protoClassNameString = protoClassName.toString();
     String protoPayloadClassNameString = protoPayloadClassName == null ? "" : protoPayloadClassName.toString();
+    String protoPayloadFieldNameString = protoPayloadFieldName == null ? "" : protoPayloadFieldName.toString();
 
     try {
-      log.info("Initializing ProtobufData with args: [protoClassName={}, legacyName={}, useConnectSchemaMap={}, protoPayloadClassName={}]", protoClassNameString, legacyNameString, useConnectSchemaMap, protoPayloadClassName);
-      protobufData = new ProtobufData(Class.forName(protoClassNameString).asSubclass(com.google.protobuf.GeneratedMessageV3.class), legacyNameString, useConnectSchemaMap, protoPayloadClassNameString);
+      log.info("Initializing ProtobufData with args: [protoClassName={}, legacyName={}, useConnectSchemaMap={}, protoPayloadClassName={} , protoPayloadFieldName={}]",
+        protoClassNameString, legacyNameString, useConnectSchemaMap, protoPayloadClassName, protoPayloadFieldName);
+      protobufData = new ProtobufData(Class.forName(protoClassNameString).asSubclass(com.google.protobuf.GeneratedMessageV3.class), legacyNameString, useConnectSchemaMap,
+                                      protoPayloadClassNameString, protoPayloadFieldNameString);
     } catch (ClassNotFoundException e) {
       throw new ConnectException("Proto class " + protoClassNameString + " not found in the classpath");
     } catch (ClassCastException e) {
